@@ -1,0 +1,33 @@
+{
+  "application": {
+    "family": "art",
+    "name": "CosmicsCorsikaCMCGen",
+    "version": "v05_12_00"
+  },
+  "data_tier": "root-tuple",
+  "end_time": "2016-06-29T13:49:13",
+  "event_count": 10,
+  "fcl.name": "prodcosmics_corsika_cmc_uboone.fcl",
+  "fcl.version":  "v05_12_00",
+  "file_format": "root",
+  "file_type": "mc",
+  "first_event": 1,
+  "group": "uboone",
+  "last_event": 10,
+  "parents": [
+    {
+     "file_name": ""
+    }
+  ],
+  "runs": [
+    [
+     1,
+     1,
+     "physics"
+    ]
+  ],
+  "start_time": "2016-06-29T13:46:34",
+  "ub_project.name": "prodcosmics_corsika_cmc_uboone",
+  "ub_project.stage": "gen",
+  "ub_project.version": "test_noOverride_v05_12_00"
+}

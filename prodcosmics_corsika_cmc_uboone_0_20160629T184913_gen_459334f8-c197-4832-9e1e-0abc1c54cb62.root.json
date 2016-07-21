@@ -1,0 +1,16 @@
+{
+  "crc": {
+    "crc_type": "adler 32 crc type", 
+    "crc_value": "3083799953"
+  }, 
+  "data_stream": "out1", 
+  "events": "10", 
+  "file_name": "prodcosmics_corsika_cmc_uboone_0_20160629T184913_gen_459334f8-c197-4832-9e1e-0abc1c54cb62.root", 
+  "file_size": "410613", 
+  "subruns": [
+    [
+      1, 
+      1
+    ]
+  ]
+}

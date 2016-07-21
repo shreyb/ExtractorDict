@@ -1,0 +1,1 @@
+lar -c subrun_wrapper.fcl --rethrow-default -o prodcosmics_corsika_cmc_uboone_0_%tc_gen.root -n 10 -e 1

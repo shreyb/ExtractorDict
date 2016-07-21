@@ -1,0 +1,15 @@
+#include "prodcosmics_corsika_cmc_uboone.fcl"
+
+services.FileCatalogMetadata.applicationVersion: "v05_12_00"
+services.FileCatalogMetadata.fileType: "mc"
+services.FileCatalogMetadata.runType: "physics"
+services.FileCatalogMetadataMicroBooNE: {
+  FCLName: "prodcosmics_corsika_cmc_uboone.fcl"
+  FCLVersion: "v05_12_00"
+  ProjectName: "prodcosmics_corsika_cmc_uboone"
+  ProjectStage: "gen"
+  ProjectVersion: "test_noOverride_v05_12_00"
+}
+services.TFileMetadataMicroBooNE: @local::microboone_tfile_metadata
+physics.producers.generator.FluxCopyMethod: "IFDH"
+physics.producers.generator.MaxFluxFileMB: 500
