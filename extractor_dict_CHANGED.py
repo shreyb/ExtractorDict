@@ -6,7 +6,7 @@ import threading
 import Queue
 import project_utilities, root_metadata
 import json
-
+import abc
 # Function to wait for a subprocess to finish and fetch return code,
 # standard output, and standard error.
 # Call this function like this:
@@ -25,6 +25,9 @@ Purpose: To extract metadata from output file on worker node, generate JSON file
 
 class MetaData(object):
     """Base class to hold / interpret general metadata"""
+    __metaclass__ = abc.ABCMeta
+    print 'You have not implemented a defineMetaData function by providing an experiment.   No metadata keys will be saved' 
+    @abc.abstractmethod
     def __init__(self, inputfile):
         self.inputfile = inputfile
 
@@ -43,7 +46,8 @@ class MetaData(object):
         return proc
     
     def get_job(self, proc):
-        """It looks like this manages how the sam_metadata_dumper command is run, returns information from that command?  Need more info"""
+    """It looks like this manages how the sam_metadata_dumper command is run, returns information from that command?  Need more info.
+        Why are we threading this?  We can just run it as a series of statements.  Seems overkill"""
         q = Queue.Queue()
         thread = threading.Thread(target=self.wait_for_subprocess, args=[proc, q])
         thread.start()
@@ -52,11 +56,12 @@ class MetaData(object):
             print 'Terminating subprocess because of timeout.'
             proc.terminate()
             thread.join()
-        rc = q.get()
-        jobout = q.get()
-        joberr = q.get()
-        if rc != 0:
-            raise RuntimeError, 'sam_metadata_dumper returned nonzero exit status {}.'.format(rc)
+        while not q.empty():
+            q.get()
+            if rc != 0:
+                raise RuntimeError, 'sam_metadata_dumper returned nonzero exit status {}.'.format(rc)
+            q.task_done()
+        q.join()
         return jobout,joberr
     
     @staticmethod
@@ -64,9 +69,8 @@ class MetaData(object):
         """Want more info about this too.  Looks like we're grabbing the output of sam_metadata_dumper, putting it into jobout and joberr"""
         jobout, joberr = jobinfo.communicate()
         rc = jobinfo.poll()
-        q.put(rc)
-        q.put(jobout)
-        q.put(joberr)
+        for item in (rc,jobout,joberr):
+            q.put(item)
         return
 
     @staticmethod
@@ -91,7 +95,7 @@ class MetaData(object):
 class expMetaData(Metadata):
     """Class to hold/interpret experiment-specific metadata"""
     def __init__(self,expname,inputfile):
-        MetaData.__init__(self,inputfile)
+        super(expMetaData,self).__init__(self,inputfile)
         self.expname = expname
         self.metadataList = [expname[:2] + elt for elt in ('ProjectName', 'project.name', 'ProjectStage', 'ProjectVersion')]
         # Is the abbreviation for all experiments the first two letters?  So the metadata list for ub is ubProjectName, etc..; is it noProjectName for Nova?  Or is there a dictionary we need to reference or something like that?  I'd like to do away with the second line if possible   
@@ -162,7 +166,7 @@ class expMetaData(Metadata):
             # For all other keys, copy art metadata directly to sam metadata.
             # This works for run-tuple (run, subrun, runtype) and time stamps.
 
-        # Get the other meta data field parameters.  You've defaulted md0 as {}. When would it not be {}?		
+        # Get the other meta data field parameters.  
         
         md['file_name'] =  self.inputfile.split("/")[-1]
         if md0.has_key('file_size'):
