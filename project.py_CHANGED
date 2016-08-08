@@ -302,7 +302,7 @@ def import_samweb():
     # Get intialized samweb, if not already done.
 
     global samweb
-    global extractor_dict
+    global expMetaData
 
     if samweb == None:
         samweb = project_utilities.samweb()
@@ -1448,20 +1448,22 @@ def docheck_declarations(logdir, outdir, declare, ana=False):
                 else:
                     expSpecificMetaData = expMetaData(os.environ['SAM_EXPERIMENT'],larbatch_posix.root_stream(path))
                     md = expSpecificMetaData.getmetadata(mdjson)
-                if len(md) > 0:
-                    project_utilities.test_kca()
-
-                    # Make lack of parent files a nonfatal error.
-                    # This should probably be removed at some point.
-
-                    try:
-                        samweb.declareFile(md=md)
-                    except:
-                        if md.has_key('parents'):
-                            del md['parents']
-                            samweb.declareFile(md=md)
-                else:
-                    print 'No sam metadata found for %s.' % fn
+                print "THIS IS WHERE THE REAL SCRIPT WOULD HAVE DECLARED DATA TO SAM"
+                print md
+#                if len(md) > 0:
+#                    project_utilities.test_kca()
+#
+#                    # Make lack of parent files a nonfatal error.
+#                    # This should probably be removed at some point.
+#
+#                    try:
+#                        samweb.declareFile(md=md)
+#                    except:
+#                        if md.has_key('parents'):
+#                            del md['parents']
+#                            samweb.declareFile(md=md)
+#                else:
+#                    print 'No sam metadata found for %s.' % fn
             else:
                 print 'Not declared: %s' % fn
                 result = 1
@@ -2423,7 +2425,7 @@ def dojobsub(project, stage, makeup):
 
         # For submit action, invoke the job submission command.
 
-        print 'Invoke jobsub_submit'
+        print 'Invoke jobsub_submit --SBTEST'
         q = Queue.Queue()
         jobinfo = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         thread = threading.Thread(target=project_utilities.wait_for_subprocess, args=[jobinfo, q])
@@ -2445,6 +2447,8 @@ def dojobsub(project, stage, makeup):
         print 'jobsub_submit finished.'
         if larbatch_posix.exists(checked_file):
             larbatch_posix.remove(checked_file)
+        if larbatch_posix.isdir(tmpdir):
+            larbatch_posix.rmtree(tmpdir)
 
     else:
 
