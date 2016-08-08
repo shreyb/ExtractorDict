@@ -26,7 +26,6 @@ Purpose: To extract metadata from output file on worker node, generate JSON file
 class MetaData(object):
     """Base class to hold / interpret general metadata"""
     __metaclass__ = abc.ABCMeta
-    print 'You have not implemented a defineMetaData function by providing an experiment.   No metadata keys will be saved' 
     @abc.abstractmethod
     def __init__(self, inputfile):
         self.inputfile = inputfile
@@ -35,18 +34,18 @@ class MetaData(object):
         """Extract metadata from inputfile into a pipe for further processing."""
         local = project_utilities.path_to_local(self.inputfile)
         if len(local) > 0:
-            proc = subprocess.Popen(["sam_metadata_dumper", local], stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
+            proc = Popen(["sam_metadata_dumper", local], stdout=PIPE,
+                        stderr=PIPE)
         else:
             url = project_utilities.path_to_url(inputfile)
-            proc = subprocess.Popen(["sam_metadata_dumper", url], stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
+            proc = Popen(["sam_metadata_dumper", url], stdout=PIPE,
+                        stderr=PIPE)
         if len(local) > 0 and local != self.inputfile:
             os.remove(local)
         return proc
     
     def get_job(self, proc):
-    """It looks like this manages how the sam_metadata_dumper command is run, returns information from that command?  Need more info.
+        """It looks like this manages how the sam_metadata_dumper command is run, returns information from that command?  Need more info.
         Why are we threading this?  We can just run it as a series of statements.  Seems overkill"""
         q = Queue.Queue()
         thread = threading.Thread(target=self.wait_for_subprocess, args=[proc, q])
@@ -56,12 +55,11 @@ class MetaData(object):
             print 'Terminating subprocess because of timeout.'
             proc.terminate()
             thread.join()
-        while not q.empty():
-            q.get()
-            if rc != 0:
-                raise RuntimeError, 'sam_metadata_dumper returned nonzero exit status {}.'.format(rc)
-            q.task_done()
-        q.join()
+        rc = q.get()
+        jobout = q.get()
+        joberr = q.get()
+        if rc != 0:
+            raise RuntimeError, 'sam_metadata_dumper returned nonzero exit status {}.'.format(rc)
         return jobout,joberr
     
     @staticmethod
@@ -92,10 +90,10 @@ class MetaData(object):
         return md['application']
 
 
-class expMetaData(Metadata):
+class expMetaData(MetaData):
     """Class to hold/interpret experiment-specific metadata"""
     def __init__(self,expname,inputfile):
-        super(expMetaData,self).__init__(self,inputfile)
+        MetaData.__init__(self,inputfile)
         self.expname = expname
         self.metadataList = [expname[:2] + elt for elt in ('ProjectName', 'project.name', 'ProjectStage', 'ProjectVersion')]
         # Is the abbreviation for all experiments the first two letters?  So the metadata list for ub is ubProjectName, etc..; is it noProjectName for Nova?  Or is there a dictionary we need to reference or something like that?  I'd like to do away with the second line if possible   
@@ -181,18 +179,18 @@ class expMetaData(Metadata):
         self.md = md        # In case we ever want to check out what md is for any instance of MetaData by calling instance.md
         return self.md
 
-    def getmetadata(self):
+    def getmetadata(self, md0 = {}):
         """ Get metadata from input file and return as python dictionary. Calls other methods in class and returns metadata dictionary"""
         proc = self.extract_metadata_to_pipe()
         jobt = self.get_job(proc)
         mdart = self.mdart_gen(jobt)
-        return self.md_gen(mdart)	
+        return self.md_gen(mdart, md0)	
 
 
 if __name__ == "__main__":
     try:
         expSpecificMetadata = expMetaData(os.environ['SAM_EXPERIMENT'],str(sys.argv[1]))
-	except TypeError:
+    except TypeError:
         print 'You have not implemented a defineMetaData function by providing an experiment.   No metadata keys will be saved'
         raise
 	mdtext = json.dumps(expSpecificMetadata.getmetadata(), indent=2, sort_keys=True)
